@@ -1,4 +1,6 @@
 import ccxt
+import schedule
+import time
 import pandas as pd
 pd.set_option('display.max_rows', None)
 
@@ -39,6 +41,7 @@ def supertrend(df, period=7, multiplier=3):
     df['lowerband'] = ((df['high'] + df['low']) / 2 - (multiplier + df['atr']))
     df['in_uptrend'] = True
 
+
     for current in range(1, len(df.index)):
         previous = current - 1
         
@@ -52,12 +55,11 @@ def supertrend(df, period=7, multiplier=3):
             if df['in_uptrend'][current] and df['lowerband'][current] < df['lowerband'][previous]:
                 df['lowerband'][current] = df['lowerband'][previous]
 
-            if not df['in_uptrend'] and df['upperband'][current] > df['upperband'][previous]:
+            if not df['in_uptrend'][current] and df['upperband'][current] > df['upperband'][previous]:
                 df['upperband'][current] = df['upperband'][previous]
 
 
     print(df)
 
 supertrend(df)
-
 
