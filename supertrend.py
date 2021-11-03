@@ -1,12 +1,14 @@
 import ccxt
 import pandas as pd
+pd.set_option('display.max_rows', None)
+
 from datetime import datetime
 
 
 
 exchange = ccxt.binance()
 
-bars = exchange.fetch_ohlcv('ETH/EUR',timeframe='15m', limit=30)
+bars = exchange.fetch_ohlcv('ETH/EUR',timeframe='15m', limit=365)
 
 df = pd.DataFrame(bars[:-1], columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
 df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
@@ -30,11 +32,29 @@ def atr(df, period=14):
 #basic upperband = [(high + low) / 2 + (multiplier * atr)]
 #basic lowerband = [(high + low) / 2 - (multiplier * atr)]
 
-def supertrend(df, period=14, multiplier=3):
+def supertrend(df, period=7, multiplier=3):
     print("Calculating Supertrend:")
     df['atr'] = atr(df, period=period)
-    df['basic_upperband'] = ((df['high'] + df['low']) / 2 + (multiplier + df['atr']))
-    df['basic_lowerband'] = ((df['high'] + df['low']) / 2 - (multiplier + df['atr']))
+    df['upperband'] = ((df['high'] + df['low']) / 2 + (multiplier + df['atr']))
+    df['lowerband'] = ((df['high'] + df['low']) / 2 - (multiplier + df['atr']))
+    df['in_uptrend'] = True
+
+    for current in range(1, len(df.index)):
+        previous = current - 1
+        
+        if df['close'][current] > df['upperband'][previous]:
+            df['in_uptrend'][current] = True
+        elif df['close'][current] < df['lowerband'][previous]:
+            df['in_uptrend'][current] = False
+        else:
+            df['in_uptrend'][current] = df['in_uptrend'][previous]
+
+            if df['in_uptrend'][current] and df['lowerband'][current] < df['lowerband'][previous]:
+                df['lowerband'][current] = df['lowerband'][previous]
+
+            if not df['in_uptrend'] and df['upperband'][current] > df['upperband'][previous]:
+                df['upperband'][current] = df['upperband'][previous]
+
 
     print(df)
 
