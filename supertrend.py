@@ -10,11 +10,6 @@ from datetime import datetime
 
 exchange = ccxt.binance()
 
-bars = exchange.fetch_ohlcv('ETH/EUR',timeframe='15m', limit=365)
-
-df = pd.DataFrame(bars[:-1], columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
-df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
-
 def tr(df):
     df['previous_close'] = df['close'].shift(1)
     df['high-low'] = df['high'] - df['low']
@@ -61,5 +56,17 @@ def supertrend(df, period=7, multiplier=3):
 
     print(df)
 
-supertrend(df)
+def job():
+    print("fetching new bars")
+    bars = exchange.fetch_ohlcv('ETH/EUR',timeframe='15m', limit=365)
+    df = pd.DataFrame(bars[:-1], columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+    df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+    print(df)
 
+schedule.every(10).seconds.do(job)   
+
+#supertrend(df)
+
+while True:
+    schedule.run_pending()
+    time.sleep(1)
