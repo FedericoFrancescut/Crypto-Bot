@@ -3,12 +3,19 @@ import schedule
 import time
 import pandas as pd
 pd.set_option('display.max_rows', None)
-
+import warnings
+warnings.filterwarnings('ignore')
 from datetime import datetime
+import config
 
 
 
-exchange = ccxt.binance()
+exchange = ccxt.binance({
+    'apiKey': config.BINANCE_API_KEY, 
+    'secret': config.BINANCE_SECRET_KEY,
+})
+
+print(exchange.fetch_balance())
 
 def tr(df):
     df['previous_close'] = df['close'].shift(1)
@@ -53,19 +60,34 @@ def supertrend(df, period=7, multiplier=3):
             if not df['in_uptrend'][current] and df['upperband'][current] > df['upperband'][previous]:
                 df['upperband'][current] = df['upperband'][previous]
 
+    return df
+    
 
-    print(df)
+def check_signals(df):
+    print("checking signals")
+    print(df.tail(2))
+    last_row_index = len(df.index) - 1
+    previous_row_index = last_row_index - 1
 
-def job():
-    print("fetching new bars")
-    bars = exchange.fetch_ohlcv('ETH/EUR',timeframe='15m', limit=365)
+    if not df['in_uptrend'][previous_row_index] and df['in_uptrend'][last_row_index]:
+        print("changed to uptremd, BUY!!")
+    
+    if df['in_uptrend'][previous_row_index] and not df['in_uptrend'][last_row_index]:
+        print("changed to downtrend, SELL!!")
+
+
+def run_bot():
+    print(f"fetching new bars for {datetime.now().isoformat()}")
+    bars = exchange.fetch_ohlcv('ETH/EUR',timeframe='15m', limit=365) 
     df = pd.DataFrame(bars[:-1], columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
     df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
-    print(df)
+    supertrend_data = supertrend(df)
+    
+    check_signals(supertrend_data)
 
-schedule.every(10).seconds.do(job)   
+schedule.every(2).seconds.do(run_bot)   
 
-#supertrend(df)
+
 
 while True:
     schedule.run_pending()
