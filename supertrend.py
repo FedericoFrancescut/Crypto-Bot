@@ -8,7 +8,7 @@ warnings.filterwarnings('ignore')
 from datetime import datetime
 import config
 
-
+print("hello, this is Future-Version branch!!")
 #Creating the object exchange
 exchange = ccxt.binance({
     'apiKey': config.BINANCE_API_KEY, 
