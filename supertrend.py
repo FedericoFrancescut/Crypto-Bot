@@ -9,13 +9,28 @@ from datetime import datetime
 import config
 
 print("hello, this is Future-Version branch!!")
+print("select your favoutite Exchange:")
+print("  1 - Binance")
+print("  2 - Coinbase")
+print("  1 - Other")
+market = input("insert the number of your choice: ")
+
+match market:
+    case "1":
+        print ("Echange Binance selected")
+    case "2": 
+        print ("Exchange Coinbase selected")
+    case _:
+        print("Nothing selected")
+        exit
+
 #Creating the object exchange
 exchange = ccxt.binance({
-    'apiKey': config.BINANCE_API_KEY, 
-    'secret': config.BINANCE_SECRET_KEY,
+    'ApiKey':"" ,
+    'SecretKey':"" , 
 })
 
-print(exchange.fetch_balance())
+#print(exchange.fetch_balance())
 
 #Calculating the True Range
 def tr(df):
@@ -101,8 +116,15 @@ def run_bot():
     supertrend_data = supertrend(df)
     check_signals(supertrend_data)
 
-#Scheduling the execution of the bot
-schedule.every(1).minutes.do(run_bot)   
+
+#Running the bot using a scheduler
+schedule.every(5).seconds.do(run_bot)   
 while True:
-    schedule.run_pending()
-    time.sleep(1)
+    try:
+        schedule.run_pending()
+        time.sleep(1)
+    except KeyboardInterrupt:
+        print("this is exception!!!")
+        exit()
+    
+    
